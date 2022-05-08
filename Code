@@ -1,0 +1,660 @@
+#include<iostream>
+#include<vector>
+#include<cmath>
+#include<string>
+#include<set>
+#include<unordered_set>
+#include <iomanip>
+using namespace std;
+void swap(int& x, int& y)
+{
+    int temp = x;
+    x = y;
+    y = temp;
+}
+struct minterm
+{
+    vector<int> binary;
+    int decimal;
+};
+struct cell
+{
+    int correspondingbinaryx;
+    int correspondingbinaryy;
+    bool trueorfalse = false;
+    int binarydecimal;
+};
+struct pairss
+{
+    vector<int> minterm1, minterm2;
+    int indexofslash;
+    bool checked = false;
+    int decimal1, decimal2;
+};
+struct tablecell
+{
+    vector<int> minterm;
+    bool taken = false;
+    int binarydecimal;
+};
+struct primeimplicant
+{
+    vector<int> minterm;
+    set<int>decimalsinvolved;
+};
+vector<int> converttobinary(int decimal)
+{
+    vector<int> number;
+    while (decimal != 0)
+    {
+        number.push_back(decimal % 2);
+        decimal = decimal / 2;
+    }
+    int k = number.size() - 1;
+    for (int i = 0; i < number.size() / 2; i++)
+    {
+        swap(number[i], number[k]);
+        k--;
+    }
+
+    return number;
+}
+int countones(vector<int> v)
+{
+    int count = 0;
+    for (int i = 0; i < v.size(); i++)
+    {
+        if (v[i] == 1)
+            count++;
+    }
+
+    return count;
+}
+bool different_in_only_one(vector<int>& v1, vector<int>& v2, int& indexofslash)
+{
+    int count = 0;
+    for (int i = 0; i < v1.size(); i++)
+    {
+        if (v1[i] != v2[i])
+        {
+
+            count++;
+            if (count <= 1)
+            {
+                indexofslash = i;
+
+
+            }
+
+        }
+    }
+
+    if (count == 1)
+    {
+
+        return true;
+    }
+
+    else
+        return false;
+}
+vector<int> adjustthebinary(vector<int> number, int n)
+{
+    vector<int> neww;
+    int diff = n - number.size();
+    for (int i = 0; i < abs(diff); i++)
+    {
+        neww.push_back(0);
+    }
+    for (int i = 0; i < number.size(); i++)
+    {
+        neww.push_back(number[i]);
+    }
+
+    return neww;
+}
+vector<minterm>getminterms(int& numberofinputs)
+{
+    vector<minterm> minterms;
+    int numberofminterms;
+    int temp;
+    vector<int>decimalofminterms;
+    vector<int>temp2;
+    minterm temp3;
+    cout << "Does your expression have 2 inputs or 3 inputs?" << endl;
+    cin >> numberofinputs;
+    while (numberofinputs != 2 && numberofinputs != 3)
+    {
+        cout << "Inaccurate,please try again" << endl;
+        cin >> numberofinputs;
+    }
+    cout << "How many minterms do you want to enter?" << endl;
+    cin >> numberofminterms;
+    while (numberofminterms > pow(2, numberofinputs))
+    {
+        cout << "Inaccurate,please try again" << endl;
+        cin >> numberofminterms;
+    }
+    cout << "Please enter your minterms" << endl;
+    for (int i = 0; i < numberofminterms; i++)
+    {
+        cin >> temp;
+        while (temp >= pow(2, numberofinputs))
+        {
+            cout << "inaccurate,please try again\n";
+            cin >> temp;
+        }
+
+        decimalofminterms.push_back(temp);
+    }
+    for (int i = 0; i < decimalofminterms.size(); i++)
+    {
+        temp2 = converttobinary(decimalofminterms[i]);
+        temp2 = adjustthebinary(temp2, numberofinputs);
+        temp3.decimal = decimalofminterms[i];
+        temp3.binary = temp2;
+        minterms.push_back(temp3);
+    }
+
+    return minterms;
+}
+vector<vector<cell>>representthemap(int& numberofinputs, vector<minterm>& minterms)
+{
+
+    minterms = getminterms(numberofinputs);
+    system("cls");
+    vector<vector<cell>>map;
+    if (numberofinputs == 2)
+    {
+        map.resize(2);
+        for (int i = 0; i < 2; i++)
+        {
+            map[i].resize(2);
+        }
+        for (int i = 0; i < 2; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                map[i][j].correspondingbinaryx = i;
+                map[i][j].correspondingbinaryy = j;
+            }
+        }
+        for (int i = 0; i < minterms.size(); i++)
+        {
+            map[minterms[i].binary[0]][minterms[i].binary[1]].trueorfalse = true;
+        }
+    }
+    if (numberofinputs == 3)
+    {
+        map.resize(2);
+        for (int i = 0; i < 2; i++)
+        {
+            map[i].resize(4);
+        }
+        for (int i = 0; i < 2; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                map[i][j].correspondingbinaryy = j;
+            }
+        }
+        map[0][0].correspondingbinaryx = 00;
+        map[0][1].correspondingbinaryx = 01;
+        map[0][2].correspondingbinaryx = 11;
+        map[0][3].correspondingbinaryx = 10;
+        map[1][0].correspondingbinaryx = 00;
+        map[1][1].correspondingbinaryx = 01;
+        map[1][2].correspondingbinaryx = 11;
+        map[1][3].correspondingbinaryx = 10;
+        for (int i = 0; i < minterms.size(); i++)
+        {
+            if (minterms[i].binary[1] == 0 && minterms[i].binary[2] == 0)
+            {
+                map[minterms[i].binary[0]][0].trueorfalse = true;
+            }
+            if (minterms[i].binary[1] == 0 && minterms[i].binary[2] == 1)
+            {
+                map[minterms[i].binary[0]][1].trueorfalse = true;
+            }
+            if (minterms[i].binary[1] == 1 && minterms[i].binary[2] == 1)
+            {
+                map[minterms[i].binary[0]][2].trueorfalse = true;
+            }
+            if (minterms[i].binary[1] == 1 && minterms[i].binary[2] == 0)
+            {
+                map[minterms[i].binary[0]][3].trueorfalse = true;
+            }
+        }
+    }
+
+    return map;
+
+}
+bool identical(vector<int>v1, vector<int>v2)
+{
+    if (v1.size() != v2.size())
+    {
+        return false;
+    }
+
+    for (int i = 0; i < v1.size(); i++)
+    {
+        if (v1[i] != v2[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+string findresult(vector<vector<int>> un_checked, vector<primeimplicant> essentialprimes)
+{
+    string result = "";
+    for (int i = 0; i < essentialprimes.size(); i++)
+    {
+        for (int j = 0; j < essentialprimes[i].minterm.size(); j++)
+        {
+            if (essentialprimes[i].minterm[j] == -1)
+            {
+                continue;
+            }
+            else
+            {
+                if (essentialprimes[i].minterm[j] == 0 && j == 0)
+                {
+                    result = result + "A'";
+                }
+                if (essentialprimes[i].minterm[j] == 1 && j == 0)
+                {
+                    result = result + "A";
+                }
+                if (essentialprimes[i].minterm[j] == 0 && j == 1)
+                {
+                    result = result + "B'";
+                }
+                if (essentialprimes[i].minterm[j] == 1 && j == 1)
+                {
+                    result = result + "B";
+                }
+                if (essentialprimes[i].minterm[j] == 0 && j == 2)
+                {
+                    result = result + "C'";
+                }
+                if (essentialprimes[i].minterm[j] == 1 && j == 2)
+                {
+                    result = result + "C";
+                }
+
+            }
+        }
+        if (i < essentialprimes.size() - 1 && result.size() > 0)
+        {
+            result = result + "+";
+        }
+
+    }
+    if (un_checked.size() != 0)
+    {
+        int len = result.size();
+        if (len > 0)
+        {
+            if (result[len - 1] != '+')
+            {
+                result = result + "+";
+            }
+        }
+
+
+
+        for (int i = 0; i < un_checked.size(); i++)
+        {
+            for (int j = 0; j < un_checked[i].size(); j++)
+            {
+                if (un_checked[i][j] == -1)
+                {
+                    continue;
+                }
+                else
+                {
+                    if (un_checked[i][j] == 0 && j == 0)
+                    {
+                        result = result + "A'";
+                    }
+                    if (un_checked[i][j] == 1 && j == 0)
+                    {
+                        result = result + "A";
+                    }
+                    if (un_checked[i][j] == 0 && j == 1)
+                    {
+                        result = result + "B'";
+                    }
+                    if (un_checked[i][j] == 1 && j == 1)
+                    {
+                        result = result + "B";
+                    }
+                    if (un_checked[i][j] == 0 && j == 2)
+                    {
+                        result = result + "C'";
+                    }
+                    if (un_checked[i][j] == 1 && j == 2)
+                    {
+                        result = result + "C";
+                    }
+                }
+            }
+            if (i != un_checked.size() - 1)
+            {
+                result = result + "+";
+            }
+        }
+    }
+    return result;
+
+}
+vector<vector<int>> get_the_unchecked(vector<vector<tablecell>> numberofones, vector < vector<pairss>> grouping2)
+{
+    vector<vector<int>> un_checked;
+    for (int i = 0; i < numberofones.size(); i++)
+    {
+        for (int j = 0; j < numberofones[i].size(); j++)
+        {
+            if (numberofones[i][j].taken == false)
+            {
+                un_checked.push_back(numberofones[i][j].minterm);
+            }
+        }
+
+    }
+    for (int i = 0; i < grouping2.size(); i++)
+    {
+        for (int j = 0; j < grouping2[i].size(); j++)
+        {
+            if (grouping2[i][j].checked == false)
+            {
+                un_checked.push_back(grouping2[i][j].minterm1);
+            }
+        }
+
+    }
+
+    return un_checked;
+}
+vector<primeimplicant> getessentialprimes(vector<vector<primeimplicant>> group3) // GET THE ESSENTIAL USING PRIMES
+{
+    bool essential = true;
+    vector<primeimplicant> essentialprimes;
+    set<int>::iterator it, it2;
+    for (int i = 0; i < group3.size(); i++)
+    {
+        if (group3[i].size() > 0)
+        {
+            for (int k = 0; k < group3[i].size(); k++)
+            {
+                it = group3[i][k].decimalsinvolved.begin();
+                while (it != group3[i][k].decimalsinvolved.end())
+                {
+                    for (int j = 0; j < group3.size(); j++)
+                    {
+                        if (i == j)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            if (group3[j].size() > 0)
+                            {
+                                it2 = group3[j][k].decimalsinvolved.find(*it);
+                                if (it2 != group3[j][k].decimalsinvolved.end())
+                                {
+                                    essential = false;
+                                }
+                            }
+
+                        }
+                    }
+                    it++;
+                }
+                if (essential)
+                {
+                    essentialprimes.push_back(group3[i][k]);
+                }
+
+            }
+
+        }
+    }
+    return essentialprimes;
+}
+bool foundintheimplicants(vector<primeimplicant> p, primeimplicant p2)
+{
+    for (int i = 0; i < p.size(); i++)
+    {
+        if (p[i].minterm == p2.minterm)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+vector<primeimplicant> getdistinctessentials(vector<primeimplicant> p)
+{
+
+    vector<primeimplicant> essentialss;
+    for (int i = 0; i < p.size(); i++)
+    {
+        if (!(foundintheimplicants(essentialss, p[i])))
+        {
+            essentialss.push_back(p[i]);
+        }
+    }
+    return essentialss;
+}
+string resultof2x2(vector<minterm> minterms)
+{
+    string result = "";
+    for (int i = 0; i < minterms.size(); i++)
+    {
+        for (int j = 0; j < minterms[i].binary.size(); j++)
+        {
+            if (minterms[i].binary[j] == 0 && j == 0)
+            {
+                result = result + "A'";
+            }
+            if (minterms[i].binary[j] == 1 && j == 0)
+            {
+                result = result + "A";
+            }
+            if (minterms[i].binary[j] == 0 && j == 1)
+            {
+                result = result + "B'";
+            }
+            if (minterms[i].binary[j] == 1 && j == 1)
+            {
+                result = result + "B";
+            }
+        }
+        if (i < minterms.size() - 1 && result.size() > 0)
+        {
+            result = result + "+";
+        }
+    }
+    return result;
+}
+void showoutput()
+{
+    int numberofinputs; vector<minterm> minterms;
+    vector<vector<cell>>map = representthemap(numberofinputs, minterms);
+    cout << " ---------------------------" << endl;
+    cout << setw(15) << "K-MAP" << endl;
+    cout << " ---------------------------" << endl;
+    if (numberofinputs == 3)
+    {
+        cout << setw(7) << "00" << setw(5) << "01" << setw(5) << "11" << setw(5) << "10" << endl;
+    }
+    if (numberofinputs == 2)
+    {
+        cout << setw(7) << "0" << setw(5) << "1" << endl;;
+    }
+    cout << "0 ";
+    int count = 0;
+    for (int i = 0; i < map.size(); i++)
+    {
+        for (int j = 0; j < map[i].size(); j++)
+        {
+            cout << setw(5) << map[i][j].trueorfalse;
+        }
+        cout << endl;
+        if (count != 1)
+        {
+            count = 1;
+            cout << "1 " << setw(5);
+        }
+    }
+    cout << endl;
+    bool represented = 0;
+    if (numberofinputs == 2)
+    {
+        cout << "The output: ";
+        if (!map[0][0].trueorfalse && !map[0][1].trueorfalse && !map[1][0].trueorfalse && !map[1][1].trueorfalse)
+        {
+            cout << "F=0" << endl;
+            represented = true;
+        }
+        if (map[0][0].trueorfalse && map[0][1].trueorfalse && !map[1][0].trueorfalse && !map[1][1].trueorfalse)
+        {
+            cout << "F=A'" << endl;
+            represented = true;
+        }
+        if (!map[0][0].trueorfalse && !map[0][1].trueorfalse && map[1][0].trueorfalse && map[1][1].trueorfalse)
+        {
+            cout << "F=A" << endl;
+            represented = true;
+        }
+        if (map[0][0].trueorfalse && !map[0][1].trueorfalse && map[1][0].trueorfalse && !map[1][1].trueorfalse)
+        {
+            cout << "F=B'" << endl;
+            represented = true;
+        }
+        if (!map[0][0].trueorfalse && map[0][1].trueorfalse && !map[1][0].trueorfalse && map[1][1].trueorfalse)
+        {
+            cout << "F=B" << endl;
+            represented = true;
+        }
+        if (map[0][0].trueorfalse && map[0][1].trueorfalse && map[1][0].trueorfalse && map[1][1].trueorfalse)
+        {
+            cout << "F=1" << endl;
+            represented = true;
+        }
+        if (map[0][0].trueorfalse && map[0][1].trueorfalse && map[1][0].trueorfalse && !map[1][1].trueorfalse)
+        {
+            cout << "F=A'+B'" << endl;
+            represented = true;
+        }
+        if (map[0][0].trueorfalse && map[0][1].trueorfalse && !map[1][0].trueorfalse && map[1][1].trueorfalse)
+        {
+            cout << "F=B+A'" << endl;
+            represented = true;
+        }
+        if (map[0][0].trueorfalse && !map[0][1].trueorfalse && map[1][0].trueorfalse && map[1][1].trueorfalse)
+        {
+            cout << "F=B'+A" << endl;
+            represented = true;
+        }
+        if (!map[0][0].trueorfalse && map[0][1].trueorfalse && map[1][0].trueorfalse && map[1][1].trueorfalse)
+        {
+            cout << "F=A+B" << endl;
+            represented = true;
+        }
+
+        if (!represented)
+            cout << "F: " + resultof2x2(minterms) << endl;
+    }
+    if (numberofinputs == 3)
+    {
+        int indexofslash = -1;
+        vector<vector<tablecell>> numberofones;
+        numberofones.resize(4);
+        vector < vector<pairss>> grouping2;
+        pairss temp;
+        grouping2.resize(3);
+        tablecell temppp;
+        for (int i = 0; i < minterms.size(); i++) // DIVIDE THE MINTERMS IN GROUPS BASED ON THE NUMBER OF ONES: TABLE ONE
+        {
+            temppp.minterm = minterms[i].binary;
+            temppp.binarydecimal = minterms[i].decimal;
+            numberofones[countones(minterms[i].binary)].push_back(temppp);
+        }
+        for (int i = 0; i < numberofones.size() - 1; i++) //PAIR UP THE MINTERMS BASED ON THE DIFFERENCE OF DIGITS OF THE BINARY
+        {
+            for (int j = 0; j < numberofones[i].size(); j++)
+            {
+                for (int k = 0; k < numberofones[i + 1].size(); k++)
+                {
+                    if (different_in_only_one(numberofones[i][j].minterm, numberofones[i + 1][k].minterm, indexofslash))
+                    {
+                        temp.minterm1 = numberofones[i][j].minterm;
+                        temp.minterm2 = numberofones[i + 1][k].minterm;
+                        numberofones[i][j].taken = true;
+                        numberofones[i + 1][k].taken = true;
+                        temp.indexofslash = indexofslash;
+                        temp.minterm1[temp.indexofslash] = -1;
+                        temp.minterm2[temp.indexofslash] = -1;
+                        temp.decimal1 = numberofones[i][j].binarydecimal;
+                        temp.decimal2 = numberofones[i + 1][k].binarydecimal;
+                        grouping2[i].push_back(temp);
+                    }
+                }
+            }
+        }
+        primeimplicant temp2;
+        vector<vector<primeimplicant>> group3;
+        int newslash;
+        group3.resize(2);
+        for (int i = 0; i < grouping2.size() - 1; i++) // COMPARE USING THE SAME MEATHOD ON A NEW GROUP OF PRIMES
+        {
+            for (int j = 0; j < grouping2[i].size(); j++)
+            {
+                for (int k = 0; k < grouping2[i + 1].size(); k++)
+                {
+                    if (different_in_only_one(grouping2[i][j].minterm1, grouping2[i + 1][k].minterm1, newslash))
+                    {
+                        temp2.minterm = grouping2[i][j].minterm1;
+                        grouping2[i][j].checked = true;
+                        grouping2[i + 1][k].checked = true;
+                        temp2.minterm[newslash] = -1;
+                        temp2.decimalsinvolved.insert(grouping2[i][j].decimal1);
+                        temp2.decimalsinvolved.insert(grouping2[i][j].decimal2);
+                        temp2.decimalsinvolved.insert(grouping2[i + 1][k].decimal1);
+                        temp2.decimalsinvolved.insert(grouping2[i + 1][k].decimal2);
+                        group3[i].push_back(temp2);
+                    }
+
+                }
+            }
+        }
+        vector<vector<int>> un_checked = get_the_unchecked(numberofones, grouping2); // IF UNCHECKED, MUST BE ESSENTIAL
+        vector<primeimplicant>essentials = getessentialprimes(group3);
+        essentials = getdistinctessentials(essentials);
+        string res = findresult(un_checked, essentials);
+        if (minterms.size() == 0)
+        {
+            res = "0";
+        }
+        else
+        {
+            if (minterms.size() == 8)
+            {
+                res = "1";
+            }
+        }
+        cout << "F= " + res << endl;
+
+    }
+}
+int main()
+{
+    showoutput();
+
+    return 0;
+}
